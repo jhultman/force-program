@@ -1,6 +1,7 @@
 import numpy as np
 import cvxpy as cp
 import matplotlib.pyplot as plt
+from animator import animate_solution
 
 
 def lower_triangular_ones(N):
@@ -10,8 +11,8 @@ def lower_triangular_ones(N):
     return A
 
 
-def build_vel_pos_matrices(m, N):
-    A_vf = 1 / m * lower_triangular_ones(N)
+def build_vel_pos_matrices(N, mass):
+    A_vf = 1 / mass * lower_triangular_ones(N)
     A_xv = lower_triangular_ones(N)
 
     rng = np.arange(N)
@@ -56,7 +57,7 @@ def prep_xvf_for_plot(x, v, f):
     return pos, vel, force
 
 
-def plot_experiment(pos, vel, force, show=False):
+def plot_experiment(pos, vel, force, fname='mass'):
     fig, ax = plt.subplots(nrows=3, sharex=True)
     titles = ['pos', 'vel', 'force']
     ylabels = ['(m)', '(m/s)', '(N)']
@@ -73,26 +74,30 @@ def plot_experiment(pos, vel, force, show=False):
         a.set_ylabel(ylab)
 
     fig.tight_layout()
-    if show: plt.show()
+    plt.savefig(f'../images/{fname}.png')
+
+
+def interpolate(pos):
+    numel = len(pos)
+    t = np.linspace(0, numel, 500)
+    pos = np.interp(t, range(numel), pos)
+    return pos
 
 
 def main():
-    N = 10
-    m = 1
-
-    A_xf, A_vf = build_vel_pos_matrices(m, N)
-    A = build_state_matrix(A_xf, A_vf)
-
+    N, mass = 10, 1
     y_d = np.array([1, 0])
 
-    norms = [1, 2, 'inf']
-    for norm in norms:
+    A_xf, A_vf = build_vel_pos_matrices(N, mass)
+    A = build_state_matrix(A_xf, A_vf)
+
+    for norm in [1, 2, 'inf']:
         f = solve_force_program_cvxpy(N, A, y_d, norm)
         x, v = construct_x_v(f, A_xf, A_vf)
         pos, vel, force = prep_xvf_for_plot(x, v, f)
 
-        plot_experiment(pos, vel, force)
-        plt.savefig(f'./images/l_{norm}.png')
+        plot_experiment(pos, vel, force, fname=f'l_{norm}')
+        animate_solution(pos, fname=f'l_{norm}_ani')
 
 
 if __name__ == '__main__':

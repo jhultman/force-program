@@ -15,13 +15,16 @@ is brought to an abrupt stop at the
 desired position by a symmetric impulse.
 
 ![l_1](./images/l_1.png)
+![l_1_ani](./images/l_1_ani.gif)
 
 With an l_2 penalty, we find that 
 the optimal force program is a staircase.
 
 ![l_2](./images/l_2.png)
+![l_2_ani](./images/l_2_ani.gif)
 
 With an l_infty penalty, the optimal force 
 program is a difference of step functions.
 
 ![l_inf](./images/l_inf.png)
+![l_inf_ani](./images/l_inf_ani.gif)
