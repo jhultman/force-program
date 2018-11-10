@@ -1,7 +1,8 @@
 import numpy as np
 import cvxpy as cp
+import numpy.linalg as la
 import matplotlib.pyplot as plt
-from animator import animate_solution
+from animator import plot_and_animate
 
 
 def lower_triangular_ones(N):
@@ -30,7 +31,8 @@ def build_state_matrix(A_xf, A_vf):
 
 
 def solve_force_program_analytically(A, y_d):
-    f = A.T @ np.linalg.inv(A @ A.T) @ y_d
+    mats = (A.T, la.inv(A @ A.T), y_d)
+    f = la.multi_dot(mats)
     return f
 
 
@@ -52,36 +54,9 @@ def construct_x_v(f, A_xf, A_vf):
 
 
 def prep_xvf_for_plot(x, v, f):
-    to_concat = ([0], x, [0], v, f[:1], f)
-    pos, vel, force = np.concatenate(to_concat).reshape(3, -1)
+    vals = ([0], x, [0], v, f[:1], f)
+    pos, vel, force = np.concatenate(vals).reshape(3, -1)
     return pos, vel, force
-
-
-def plot_experiment(pos, vel, force, fname='mass'):
-    fig, ax = plt.subplots(nrows=3, sharex=True)
-    titles = ['pos', 'vel', 'force']
-    ylabels = ['(m)', '(m/s)', '(N)']
-    xlabels = ['', '', '(s)']
-    t = range(len(pos))
-
-    ax[0].plot(pos, c='blue')
-    ax[1].plot(vel, c='red')
-    ax[2].step(t, force, c='green')
-
-    for a, t, xlab, ylab in zip(ax, titles, xlabels, ylabels):
-        a.set_title(t)
-        a.set_xlabel(xlab)
-        a.set_ylabel(ylab)
-
-    fig.tight_layout()
-    plt.savefig(f'../images/{fname}.png')
-
-
-def interpolate(pos):
-    numel = len(pos)
-    t = np.linspace(0, numel, 500)
-    pos = np.interp(t, range(numel), pos)
-    return pos
 
 
 def main():
@@ -95,9 +70,7 @@ def main():
         f = solve_force_program_cvxpy(N, A, y_d, norm)
         x, v = construct_x_v(f, A_xf, A_vf)
         pos, vel, force = prep_xvf_for_plot(x, v, f)
-
-        plot_experiment(pos, vel, force, fname=f'l_{norm}')
-        animate_solution(pos, fname=f'l_{norm}_ani')
+        plot_and_animate(pos, vel, force, fname=f'l_{norm}')
 
 
 if __name__ == '__main__':

@@ -6,30 +6,31 @@ from matplotlib.patches import Rectangle
 
 class Animator:
 
-    def __init__(self, x):
-        self.x = x
-        self.fig, self.ax = plt.subplots(figsize=(10, 2))
-        self.fig.tight_layout()
+    def __init__(self, pos, vel, force):
+        self.pos = pos
+        self.vel = vel
+        self.force = force
+        self.pos_interp = interpolate_pos(pos)
+        self.fig, self.ax = plt.subplots(nrows=4, sharex=True, figsize=(9, 8))
 
     def init_lims(self):
-        xmin, xmax = np.min(self.x), np.max(self.x)
+        xmin, xmax = np.min(self.pos), np.max(self.pos)
         ymin, ymax = 0, 0.1
         border = 0.1 * (xmax - xmin)
-        self.ax.set_xlim(xmin - border, xmax + border)
-        self.ax.set_ylim(ymin, ymax)
+        for a in self.ax:
+            a.set(xlim=[xmin - border, xmax + border])
 
     def init_ticks(self):
-        x0, x1 = self.x[0], self.x[-1]
-        self.ax.set_xticks(np.linspace(x0, x1, 3))
-        self.ax.set_yticks([])
+        x0, x1 = self.pos[0], self.pos[-1]
+        self.ax[3].set(yticks=[])
 
     def init_marker_lines(self):
-        for x in self.x[[0, -1]]:
-            self.ax.axvline(x=x, color='grey', linestyle='dashed')
+        for x in self.pos[[0, -1]]:
+            self.ax[3].axvline(x=x, color='grey', linestyle='dashed', alpha=0.5)
 
     def init_patch(self):
-        self.patch = Rectangle((self.x[0], 0), 0.1, 0.1, color='skyblue')
-        self.ax.add_patch(self.patch)
+        self.patch = Rectangle((self.pos[0], 0), 0.05, 1, color='royalblue')
+        self.ax[3].add_patch(self.patch)
 
     def init_ani(self):
         self.init_lims()
@@ -39,31 +40,50 @@ class Animator:
         return self.patch,
 
     def step_ani(self, frame):
-        self.patch.set_xy([self.x[frame], 0])
+        self.patch.set_xy([self.pos_interp[frame], 0])
         return self.patch,
 
     def ani(self, fname):
-        args = ()
         animation = FuncAnimation(
             self.fig, 
             self.step_ani, 
-            frames=range(len(self.x)),
+            frames=range(len(self.pos_interp)),
             init_func=self.init_ani, 
             blit=True, 
             interval=50,
             repeat=False,
         )
-        animation.save(f'../images/{fname}.gif', dpi=80, writer='imagemagick')
+        animation.save(
+            f'../images/{fname}.gif', 
+            writer='imagemagick',
+            dpi=80, 
+        )
+
+    def plot(self):
+        T = len(self.pos)
+        t = np.arange(T) / (T - 1)
+        self.ax[0].plot(t, self.pos, c='royalblue')
+        self.ax[1].plot(t, self.vel, c='orangered')
+        self.ax[2].step(t, self.force, c='forestgreen')
+
+        titles = ['pos', 'vel', 'force', 'traj']
+        ylabels = ['(m)', '(m/s)', '(N)', '']
+        for a, title, ylab in zip(self.ax, titles, ylabels):
+            a.set(title=title, ylabel=ylab, xticklabels=[], xticks=t)
 
 
-def interpolate(pos):
+def interpolate_pos(pos, npoints=100):
     numel = len(pos)
-    t = np.linspace(0, numel, 100)
+    t = np.linspace(0, numel, npoints)
     pos = np.interp(t, range(numel), pos)
     return pos
 
 
-def animate_solution(pos, fname='mass'):
-    pos = interpolate(pos) 
-    animator = Animator(pos)
+def plot_and_animate(pos, vel, force, fname):
+    animator = Animator(pos, vel, force)
+    animator.plot()
     animator.ani(fname)
+
+
+if __name__ == '__main__':
+    main()

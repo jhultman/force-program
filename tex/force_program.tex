@@ -19,93 +19,40 @@
 
 \begin{document}
 
-Consider a mass $m$ on a frictionless table subject to a piece-wise constant force
+Consider a mass $m$ on a frictionless table subject to a piecewise constant force
 
 \begin{equation*}
-	f(t) = f_i \text{ for } t \in [i - 1, i) \text{ and } \; i = 1, \ldots, 10.
+	f(t) = f_i \text{ for } t \in [i - 1, i) \text{ and } \; i = 1, \ldots, T_n.
 \end{equation*}
 
 \bigbreak
 
-Let $y(t) = (x, v)$ denote the position and velocity of the mass. We'll use the notation $z_i = z(i)$ for $z \in \{x, v, y\}$ since with a piece-wise
-constant force the problem discretizes. 
-
-Suppose $y_0 = (0, 0)$ and we seek a force program $f_i$  which lands the mass in a desired state $y_d = (1, 0)$ at $ t = 10$. 
+Let $y(t) = (x, v)$ denote the position and velocity of the mass. We'll use the notation $z_i = z(i)$ for $z \in \{x, v, y\}$ since with a piecewise
+constant force the problem discretizes. Suppose $y_0 = \mathbf{0}$, $T_n = 10$ and we seek a force program $f_i$  which lands the mass in a desired state $y_d = (1, 0)$ at $t = T_n$. 
 
 \bigbreak
 
-\noindent Under the assumed initial rest, the velocity $v(t)$ can be written: $v = A_{vf} f$.
-
-\bigbreak
-
-\noindent Let's find the entries of $A_{vf}$. Consider the rows $a_i$ of $A_{vf}$. The entries in the first row $a_1$ tell us how the forces affect the velocity of the mass at $t = 1$ seconds. Clearly, forces $f_2, f_3, ...$ can have no effect on $v_1$, since at $t = 1$ they have not yet been applied. Newton's first law for a constant force says $\Delta v = a \Delta t = \frac{f}{m} \Delta t$, and so with $\Delta t = (i+1) - (i) = 1$ we have that $a_1 = (\frac{f_1}{m}, 0, ...)$.
-
-\bigbreak
-
-\noindent To find $a_2$, we reason from causality just as before. It's clear that $v_2$ cannot depend on $f_3, f_4, ...$. The dependency on $f_1$ and $f_2$ is very simple: it's additive. In other words, the velocity at time $t$ depends on the running sum of the forces applied so far (each multiplied by the duration of its application). 
-And so we can write: 
-
-\begingroup
-\Large
-\begin{equation*}
-	v_i = \frac{1}{m} \Sigma_{j = 1}^{i} f_j, \text{ for } \; i = 1, \ldots, 10,
-\end{equation*}
-\endgroup
-
-or in matrix form:
+\noindent Under the assumed initial rest, the velocity $v(t)$ can be written: $v = A^{vf} f$. Since the system is causal it is clear that $A^{vf}_{ij} = 0$ for $i < j$. (The velocity $v_i$ cannot depend on a force $f_j$ which has not yet been applied.) Applying Newton's first law under constant force gives $\Delta v = a \Delta t = \frac{f}{m} \Delta t$. For piecewise constant $f$ and $\Delta t = (i+1) - (i) = 1$, the velocity at time $t$ is simply the running sum of the forces applied so far:
 
 \begin{equation*}
-	A_{vf} = \frac{1}{m}
+	v = A^{vf} f = \frac{1}{m}
 	\begin{pmatrix}
-	    f_1    &        &        &        \\
-	    f_1    &  f_2   &        &        \\
-	    \vdots & \vdots & \ddots &        \\
-	    f_1    & f_2    & \hdots & f_{10} \\
-	\end{pmatrix},
+	    1      &        &   \\
+	    \vdots & \ddots &   \\
+	    1      & \hdots & 1 \\
+	\end{pmatrix} f,
 \end{equation*}
 
-where the entries not shown are zero. 
+where the upper-diagonal elements are zero. 
 
 \bigbreak
 
-\noindent Similarly, the position can be written as a function of the velocities: $x = A_{xv} v$.
+Since the applied forces are piecewise constant, the velocities are piecewise linear, and the discrete-time positions can be written as a linear function of the sampled velocities: $x = A^{xv} v$, where
 
 \bigbreak
 
-\noindent As before, let's think about the first row $a_1$ of $A_{xv}$. 
-Since the applied forces are piecewise constant, the velocities are piecewise linear. 
-Under constant acceleration, displacement is simply determined by the average of the velocities at the two endpoints. 
-Under initial rest, we have then 
-
-\begin{equation}
-x_1 = \frac{1}{2} v_1,
-\end{equation}
-
-and similarly
-
-\begin{equation}
-x_2 = x_1 + \frac{1}{2} (v_1 + v_2). 
-\end{equation}
-
-With a substitution, we have:
-\begin{equation}
-x_2 = v_1 + \frac{1}{2} v_2. 
-\end{equation}
-
-Carrying out the induction, we see:
-
-\begin{equation}
-x_i = \Sigma_{j=0}^{i - 1} v_j + \frac{1}{2} v_i.
-\end{equation}
-
-\bigbreak
-
-And so the elements of $A_{xv}$ are simply: 
-
-\bigbreak
-
-$
-A_{xv}(i, j) = 
+\begin{equation*}
+A^{xv}_{i, j} = 
 \left\{
 \begin{array}{ll}
       0 & i > j \\
@@ -113,22 +60,26 @@ A_{xv}(i, j) =
       1 & i < j \\
 \end{array} 
 \right.
-$
+\end{equation*}
 
 \bigbreak
 
-\noindent Finally form $A_{xf} = A_{xv} A_{vf}$.
+\noindent Next form $A^{xf} = A^{xv} A^{vf}$.
 
 Of particular interest to us is the final state 
-$y = (x_{10}, v_{10})$. Letting 
-$a_{xf} = A_{xf}(10, :)$ and 
-$a_{vf} = A_{vf}(10, :)$, and defining:
+$y = (x_{10}, v_{10})$. Defining row vectors 
+\begin{equation*}
+    (a_i^{xf})^T = A^{xf}_{10, i} \quad\text{and}\quad 
+    (a_i^{vf})^T = A^{vf}_{10, i}
+\end{equation*}
+
+and defining:
 
 \begin{equation}
 	A \in \mathbb{R} ^ {2 \times 10} = 
 	\begin{pmatrix}
-	    a_{xf} \\[2pt]
-	    a_{vf} \\[2pt]
+	    (a^{xf})^T \\[2pt]
+	    (a^{vf})^T \\[2pt]
 	\end{pmatrix},
 \end{equation}
 
@@ -145,22 +96,22 @@ As it stands, finding a force program is a feasibility problem. Let's add a regu
 & \underset{f}{\text{minimize}}
 & & \frac{1}{2} f^T f \\
 & \text{subject to}
-& & A f = y_d
+& & A f = y_d,
 \end{aligned}
 \end{equation}
 
-This is nothing but the least-norm problem for an overdetermined system of equations. Let's solve it for practice. We introduce a Lagrangian, 
+\noindent which is the least-norm problem for an overdetermined system of equations. Let's solve it for practice. We introduce a Lagrangian, 
 
 \begin{equation}
 \Lagr = f^T f + \lambda ^ T (A f - y_d)
-\end{equation},
+\end{equation}
 
-and take first order conditions (FOCs):
+\noindent and take first order conditions (FOCs):
 
 \begin{subequations}
     \begin{align}
     \frac{\partial \Lagr}{\partial f} &= f + A^T \lambda = 0  \label{eq:foca} \\
-    \frac{\partial \Lagr}{\partial \lambda} &= A f - y_d = 0, \label{eq:focb}
+    \frac{\partial \Lagr}{\partial \lambda} &= A f - y_d = 0. \label{eq:focb}
     \end{align}
 \end{subequations}
 
@@ -189,9 +140,7 @@ f = A^T (A A^T)^{-1} y_d.
 \end{equation}
 
 While $l_2$ gives us traction analytically, other penalties give rise to 
-solutions with very nice interpretations, and in some cases yield a convex
-formulation. For instance, consider an $\norm{\cdot}_1$ penalty on the forces, 
-which in a propulsion application would actually correspond closely to fuel 
-consumption. An $\norm{\cdot}_\infty$ would penalize the max thruster.
+solutions with very nice interpretations, and in some cases yield convex
+formulations. In a propulsion application, an $\norm{\cdot}_1$ penalty on the forces would correspond closely to constraining fuel consumption (Boyd), while $\norm{\cdot}_\infty$ would penalize the max thruster.
 
 \end{document}
