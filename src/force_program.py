@@ -15,10 +15,8 @@ def lower_triangular_ones(N):
 def build_vel_pos_matrices(N, mass):
     A_vf = 1 / mass * lower_triangular_ones(N)
     A_xv = lower_triangular_ones(N)
-
     rng = np.arange(N)
     A_xv[rng, rng] = 1 / 2
-
     A_xf = A_xv @ A_vf
     return A_xf, A_vf
 
@@ -39,7 +37,6 @@ def solve_force_program_analytically(A, y_d):
 def solve_force_program_cvxpy(N, A, y_d, norm=2):
     f = cp.Variable(N)
     y_d = np.array([1, 0])
-
     constraints = [(A @ f) == y_d]
     J = cp.norm(f, p=norm)
     obj = cp.Minimize(J)
@@ -62,10 +59,8 @@ def prep_xvf_for_plot(x, v, f):
 def main():
     N, mass = 10, 1
     y_d = np.array([1, 0])
-
     A_xf, A_vf = build_vel_pos_matrices(N, mass)
     A = build_state_matrix(A_xf, A_vf)
-
     for norm in [1, 2, 'inf']:
         f = solve_force_program_cvxpy(N, A, y_d, norm)
         x, v = construct_x_v(f, A_xf, A_vf)

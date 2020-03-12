@@ -45,18 +45,18 @@ class Animator:
 
     def ani(self, fname):
         animation = FuncAnimation(
-            self.fig, 
-            self.step_ani, 
+            self.fig,
+            self.step_ani,
             frames=range(len(self.pos_interp)),
-            init_func=self.init_ani, 
-            blit=True, 
+            init_func=self.init_ani,
+            blit=True,
             interval=50,
             repeat=False,
         )
         animation.save(
-            f'../images/{fname}.gif', 
+            f'../images/{fname}.gif',
             writer='imagemagick',
-            dpi=80, 
+            dpi=80,
         )
 
     def plot(self):
@@ -65,7 +65,6 @@ class Animator:
         self.ax[0].plot(t, self.pos, c='royalblue')
         self.ax[1].plot(t, self.vel, c='orangered')
         self.ax[2].step(t, self.force, c='forestgreen')
-
         titles = ['pos', 'vel', 'force', 'traj']
         ylabels = ['(m)', '(m/s)', '(N)', '']
         for a, title, ylab in zip(self.ax, titles, ylabels):
